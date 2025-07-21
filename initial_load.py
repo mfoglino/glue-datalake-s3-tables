@@ -5,7 +5,7 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'source-bucket', 'table-namespace', 'table-name', 'warehouse-path'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'source_bucket', 'table_namespace', 'table_name'])
 
 sc = SparkContext()
 glueContext = GlueContext(sc)
@@ -17,8 +17,6 @@ job.init(args['JOB_NAME'], args)
 source_path = f"s3://{args['source_bucket']}/landing/people/LOAD00000001.parquet"
 df = spark.read.parquet(source_path)
 
-# Configure Spark for S3 Tables
-spark.conf.set("spark.sql.catalog.s3tablesbucket.warehouse", args['warehouse_path'])
 
 # Write to S3 Tables
 table_name = f"{args['table_namespace']}.{args['table_name']}"

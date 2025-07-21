@@ -16,7 +16,7 @@ def spark():
         .config("spark.sql.catalog.s3tablesbucket.catalog-impl", "software.amazon.s3tables.iceberg.S3TablesCatalog") \
         .config("spark.sql.catalog.s3tablesbucket.warehouse", S3_TABLE_BUCKET) \
         .config("spark.sql.catalog.local", "org.apache.iceberg.spark.SparkCatalog") \
-        #.config("spark.sql.catalog.local.warehouse", "/tmp/warehouse") \
+        .config("spark.sql.catalog.s3tables.glue.id", "131578276461:s3tablescatalog/datalake-example-s3tables") \
         .getOrCreate())
     
     yield spark

@@ -86,6 +86,20 @@ resource "aws_iam_role_policy" "glue_policy" {
       {
         Effect = "Allow"
         Action = [
+          "athena:*",
+          "glue:GetDatabase",
+          "glue:GetTable",
+          "glue:GetTables",
+          "glue:GetPartitions",
+          "lakeformation:GetDataAccess",
+          "lakeformation:GrantPermissions",
+          "lakeformation:BatchGrantPermissions"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
@@ -115,10 +129,9 @@ resource "aws_glue_job" "initial_load" {
     "--job-language"        = "python"
     "--enable-metrics"      = ""
     "--enable-observability-metrics" = "true"
-    "--source-bucket"       = var.datalake_bucket
-    "--table-namespace"     = "s3tables"
-    "--table-name"         = "people"
-    "--warehouse-path"      = "s3://${var.datalake_bucket}/warehouse"
+    "--source_bucket"       = var.datalake_bucket
+    "--table_namespace"     = "s3tables"
+    "--table_name"         = "people"
     "--conf"               = <<EOT
 spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
 --conf spark.sql.defaultCatalog=s3tablesbucket
@@ -158,4 +171,16 @@ EOT
   }
 
   glue_version = "5.0"
+}
+
+# Lake Formation permissions for S3 Tables
+resource "aws_lakeformation_permissions" "s3tables_permissions" {
+  principal   = aws_iam_role.glue_role.arn
+  permissions = ["ALL"]
+
+  table {
+    catalog_id = "${data.aws_caller_identity.current.account_id}:s3tablescatalog/${var.datalake_bucket}"
+    database_name = "s3tables"
+    name          = "people"
+  }
 }
