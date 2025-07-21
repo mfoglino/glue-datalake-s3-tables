@@ -19,15 +19,15 @@ locals {
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
-# S3 Bucket for S3 Tables
-resource "aws_s3_bucket" "table_bucket" {
-  bucket = var.s3tables_bucket
+# S3 Tables Bucket
+resource "aws_s3tables_table_bucket" "table_bucket" {
+  name = var.s3tables_bucket
 }
 
 # S3 Tables Namespace
 resource "aws_s3tables_namespace" "datalake" {
   namespace        = "s3tables"
-  table_bucket_arn = aws_s3_bucket.table_bucket.arn
+  table_bucket_arn = aws_s3tables_table_bucket.table_bucket.arn
 }
 
 # S3 Tables Table for people data
@@ -35,7 +35,7 @@ resource "aws_s3tables_table" "people" {
   namespace        = aws_s3tables_namespace.datalake.namespace
   name             = "people"
   format           = "ICEBERG"
-  table_bucket_arn = aws_s3_bucket.table_bucket.arn
+  table_bucket_arn = aws_s3tables_table_bucket.table_bucket.arn
 }
 
 # IAM Role for Glue Jobs
@@ -124,7 +124,7 @@ spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExte
 --conf spark.sql.defaultCatalog=s3tablesbucket
 --conf spark.sql.catalog.s3tablesbucket=org.apache.iceberg.spark.SparkCatalog
 --conf spark.sql.catalog.s3tablesbucket.catalog-impl=software.amazon.s3tables.iceberg.S3TablesCatalog
---conf spark.sql.catalog.s3tablesbucket.warehouse=arn:aws:s3tables:${local.region}:${local.account_id}:bucket/${aws_s3_bucket.table_bucket.id}
+--conf spark.sql.catalog.s3tablesbucket.warehouse=arn:aws:s3tables:${local.region}:${local.account_id}:bucket/${aws_s3tables_table_bucket.table_bucket.name}
 EOT
   }
 
@@ -153,7 +153,7 @@ spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExte
 --conf spark.sql.defaultCatalog=s3tablesbucket
 --conf spark.sql.catalog.s3tablesbucket=org.apache.iceberg.spark.SparkCatalog
 --conf spark.sql.catalog.s3tablesbucket.catalog-impl=software.amazon.s3tables.iceberg.S3TablesCatalog
---conf spark.sql.catalog.s3tablesbucket.warehouse=arn:aws:s3tables:${local.region}:${local.account_id}:bucket/${aws_s3_bucket.table_bucket.id}
+--conf spark.sql.catalog.s3tablesbucket.warehouse=arn:aws:s3tables:${local.region}:${local.account_id}:bucket/${aws_s3tables_table_bucket.table_bucket.name}
 EOT
   }
 
