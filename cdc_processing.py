@@ -1,25 +1,25 @@
 import sys
-from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.job import Job
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'source-bucket', 'table-name', 'cdc-path', 'warehouse-path'])
+spark = SparkSession.builder.appName("glue-s3-tables") \
+    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
+    .config("spark.sql.defaultCatalog", "s3tablesbucket") \
+    .config("spark.sql.catalog.s3tablesbucket", "org.apache.iceberg.spark.SparkCatalog") \
+    .config("spark.sql.catalog.s3tablesbucket.catalog-impl", "software.amazon.s3tables.iceberg.S3TablesCatalog") \
+    .config("spark.sql.catalog.s3tablesbucket.warehouse", "arn:aws:s3tables:us-east-1:131578276461:bucket/datalake-example-s3tables") \
+    .getOrCreate()
 
-sc = SparkContext()
-glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args['JOB_NAME'], args)
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'source_bucket', 'table_name'])
+
 
 # Read CDC parquet files
-source_path = f"s3://{args['source_bucket']}/landing/people/{args['cdc_path']}"
+cdc_path = "/2023/01/02/13/cdc-001.parquet"
+source_path = f"s3://{args['source_bucket']}/people/{cdc_path}"
 cdc_df = spark.read.parquet(source_path)
 
-# Configure Spark for S3 Tables
-spark.conf.set("spark.sql.catalog.s3tablesbucket.warehouse", args['warehouse_path'])
+
 
 # Read existing table
 table_name = f"s3tablesmarcos.{args['table_name']}"
@@ -37,4 +37,3 @@ if inserts.count() > 0:
 if updates.count() > 0:
     updates.write.format("iceberg").mode("append").saveAsTable(table_name)
 
-job.commit()
