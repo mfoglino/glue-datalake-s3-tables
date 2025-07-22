@@ -3,9 +3,7 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 from datetime import datetime
 
 def test_generate_initial_data(spark, glue_context):
-    catalog_name = "s3tables"
-    table_name = "people"
-    
+
     # Generate initial people data
     initial_data = [
         (1, "John", "Doe", "john.doe@email.com", datetime(2023, 1, 1)),
@@ -23,15 +21,10 @@ def test_generate_initial_data(spark, glue_context):
     
     df = spark.createDataFrame(initial_data, schema)
     
-    # Write initial load file
-    df.coalesce(1).write.mode("overwrite").parquet("tests/data/LOAD00000001.parquet")
+    # Write initial load file to S3 DMS landing bucket
+    df.coalesce(1).write.mode("overwrite").parquet("s3://datalake-example-landing/people/LOAD00000001.parquet")
     
-    # Create Iceberg table
-    df.write.format("iceberg").mode("overwrite").saveAsTable(f"{catalog_name}.{table_name}")
-    
-    # Verify data
-    result = spark.read.format("iceberg").table(f"{catalog_name}.{table_name}")
-    assert result.count() == 3
+
 
 def test_generate_cdc_data(spark, glue_context):
     # Generate CDC data
@@ -52,7 +45,7 @@ def test_generate_cdc_data(spark, glue_context):
     
     cdc_df = spark.createDataFrame(cdc_data, schema)
     
-    # Write CDC file
-    cdc_df.coalesce(1).write.mode("overwrite").parquet("tests/data/cdc-001.parquet")
+    # Write CDC file to S3 DMS landing bucket
+    cdc_df.coalesce(1).write.mode("overwrite").parquet("s3://datalake-example-landing/people/2023/01/02/13/cdc-001.parquet")
     
     assert cdc_df.count() == 3

@@ -2,7 +2,7 @@
 
 ## Architecture
 - **Landing Zone**: s3://datalake-example/landing
-- **Raw Layer**: S3 Tables with namespace 's3tables'
+- **Raw Layer**: S3 Tables with namespace 's3tablesmarcos'
 - **Processing**: AWS Glue Jobs
 
 ## Data Flow
@@ -20,3 +20,7 @@ terraform apply
 ## Usage
 - Initial Load Job: `people-initial-load`
 - CDC Processing Job: `people-cdc-processing` (requires `--cdc-path` parameter)
+
+
+
+# export PYTHONPATH=$PYTHONPATH:/home/hadoop/workspace

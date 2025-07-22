@@ -22,7 +22,7 @@ cdc_df = spark.read.parquet(source_path)
 spark.conf.set("spark.sql.catalog.s3tablesbucket.warehouse", args['warehouse_path'])
 
 # Read existing table
-table_name = f"s3tables.{args['table_name']}"
+table_name = f"s3tablesmarcos.{args['table_name']}"
 existing_df = spark.read.format("iceberg").table(table_name)
 
 # Process CDC operations
