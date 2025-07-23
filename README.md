@@ -18,9 +18,16 @@ terraform apply
 ```
 
 ## Usage
+- Populate S3 with: `test_data_generation.py`
 - Initial Load Job: `people-initial-load`
-- CDC Processing Job: `people-cdc-processing` (requires `--cdc-path` parameter)
+- CDC Processing Job: `people-cdc-processing`
 
 
+## Important note:
+When creating tables, make sure that you use all lowercase letters in your table names and table definitions. For example, make sure that your column names are all lowercase. If your table name or table definition contains capital letters, the table isn't supported by AWS Lake Formation or the AWS Glue Data Catalog. In this case, your table won't be visible to AWS analytics services such as Amazon Athena, even if your table buckets are integrated with AWS analytics services.
 
-# export PYTHONPATH=$PYTHONPATH:/home/hadoop/workspace
+Even silent errors can occur:
+For example the written table appears in the S3 Table Console, but it doesn't appear in Athena.
+
+- https://repost.aws/pt/questions/QUB87eOCjxTAmiomX7U525pw/s3-bucket-data-migration-to-s3-table?sc_ichannel=ha&sc_ilang=en&sc_isite=repost&sc_iplace=hp&sc_icontent=QUB87eOCjxTAmiomX7U525pw&sc_ipos=4
+- https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-tables-integrating-aws.html#table-integration-procedures
