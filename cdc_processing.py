@@ -16,40 +16,61 @@ args = getResolvedOptions(sys.argv, ['JOB_NAME', 'source_bucket', 'table_name'])
 
 
 ########## Auxiliar methods
-def handle_schema_evolution(existing_df, cdc_df, column_mapping=None):
+def handle_schema_evolution_iceberg(existing_df, cdc_df, table_name, column_mapping=None):
     """
-    Comprehensive schema evolution handler
+    Iceberg-specific schema evolution handler
     """
     if column_mapping is None:
         column_mapping = {}
 
-    # Apply column renaming to existing data
+    # Apply column renaming to CDC data
     for old_col, new_col in column_mapping.items():
-        if old_col in existing_df.columns:
-            existing_df = existing_df.withColumnRenamed(old_col, new_col)
+        if old_col in cdc_df.columns:
+            cdc_df = cdc_df.withColumnRenamed(old_col, new_col)
 
     existing_schema = existing_df.schema
     cdc_schema = cdc_df.schema
 
-    # Add new columns to existing data
+    # Find new columns in CDC data
+    new_columns = []
     for field in cdc_schema.fields:
         if field.name not in existing_schema.fieldNames():
-            existing_df = existing_df.withColumn(field.name, lit(None).cast(field.dataType))
+            new_columns.append(field)
 
-    # Add missing columns to CDC data
-    for field in existing_schema.fields:
-        if field.name not in cdc_schema.fieldNames() and field.name not in column_mapping.values():
-            cdc_df = cdc_df.withColumn(field.name, lit(None).cast(field.dataType))
+    # Add new columns to Iceberg table schema first
+    for field in new_columns:
+        try:
+            spark.sql(f"""
+                ALTER TABLE {table_name} 
+                ADD COLUMN {field.name} {field.dataType.simpleString()}
+            """)
+            print(f"Added column {field.name} to table {table_name}")
+        except Exception as e:
+            print(f"Column {field.name} might already exist: {e}")
 
-    # Align column order
-    final_columns = list(set(existing_df.columns) | set(cdc_df.columns))
-    existing_df = existing_df.select(*[c for c in final_columns if c in existing_df.columns])
-    cdc_df = cdc_df.select(*[c for c in final_columns if c in cdc_df.columns])
+    # Re-read the table to get updated schema
+    existing_df = spark.read.format("iceberg").table(table_name)
+
+    # Now align the DataFrames
+    final_columns = existing_df.columns
+
+    # Add missing columns to CDC data with null values
+    for col_name in final_columns:
+        if col_name not in cdc_df.columns:
+            # Get the data type from existing schema
+            field_type = next((f.dataType for f in existing_df.schema.fields if f.name == col_name), "string")
+            cdc_df = cdc_df.withColumn(col_name, lit(None).cast(field_type))
+
+    # Ensure column order matches
+    cdc_df = cdc_df.select(*final_columns)
 
     return existing_df, cdc_df
 ######################################################################
 
 # Read CDC parquet files
+
+
+
 cdc_path = "/2023/01/02/13/cdc-001.parquet"
 source_path = f"s3://{args['source_bucket']}/people/{cdc_path}"
 cdc_df = spark.read.parquet(source_path)
@@ -60,12 +81,12 @@ table_name = f"s3tablesmarcos.{args['table_name']}"
 existing_df = spark.read.format("iceberg").table(table_name)
 
 # Usage in your code:
-existing_df, cdc_df = handle_schema_evolution(
+existing_df, cdc_df = handle_schema_evolution_iceberg(
     existing_df,
     cdc_df,
+    table_name,
     column_mapping={"old_address": "address"}  # Optional renames
 )
-
 # Separate CDC operations
 inserts = cdc_df.filter(col("Op") == "I").drop("Op")
 updates = cdc_df.filter(col("Op") == "U").drop("Op")
