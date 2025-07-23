@@ -31,17 +31,17 @@ def handle_schema_evolution_iceberg(existing_df, cdc_df, table_name, column_mapp
     existing_schema = existing_df.schema
     cdc_schema = cdc_df.schema
 
-    # Find new columns in CDC data
+    # Find new columns in CDC data (excluding Op column)
     new_columns = []
     for field in cdc_schema.fields:
-        if field.name not in existing_schema.fieldNames():
+        if field.name not in existing_schema.fieldNames() and field.name != "Op":
             new_columns.append(field)
 
     # Add new columns to Iceberg table schema first
     for field in new_columns:
         try:
             spark.sql(f"""
-                ALTER TABLE {table_name} 
+                ALTER TABLE {table_name}
                 ADD COLUMN {field.name} {field.dataType.simpleString()}
             """)
             print(f"Added column {field.name} to table {table_name}")
@@ -51,20 +51,17 @@ def handle_schema_evolution_iceberg(existing_df, cdc_df, table_name, column_mapp
     # Re-read the table to get updated schema
     existing_df = spark.read.format("iceberg").table(table_name)
 
-    # Now align the DataFrames
-    final_columns = existing_df.columns
+    # Get table columns (excluding Op)
+    table_columns = existing_df.columns
 
     # Add missing columns to CDC data with null values
-    for col_name in final_columns:
+    for col_name in table_columns:
         if col_name not in cdc_df.columns:
             # Get the data type from existing schema
             field_type = next((f.dataType for f in existing_df.schema.fields if f.name == col_name), "string")
             cdc_df = cdc_df.withColumn(col_name, lit(None).cast(field_type))
 
-    # Ensure column order matches
-    cdc_df = cdc_df.select(*final_columns)
-
-    return existing_df, cdc_df
+    return existing_df, cdc_df, table_columns
 ######################################################################
 
 # Read CDC parquet files
