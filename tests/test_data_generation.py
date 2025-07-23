@@ -6,9 +6,9 @@ def test_generate_initial_data(spark, glue_context):
 
     # Generate initial people data
     initial_data = [
-        (1, "John", "Doe", "john.doe@email.com", datetime(2023, 1, 1)),
-        (2, "Jane", "Smith", "jane.smith@email.com", datetime(2023, 1, 1)),
-        (3, "Bob", "Johnson", "bob.johnson@email.com", datetime(2023, 1, 1))
+        (1, "John", "Doe", "john.doe@email.com", datetime(2023, 1, 1), "I"),
+        (2, "Jane", "Smith", "jane.smith@email.com", datetime(2023, 1, 1), "I"),
+        (3, "Bob", "Johnson", "bob.johnson@email.com", datetime(2023, 1, 1), "I")
     ]
     
     schema = StructType([
@@ -16,7 +16,8 @@ def test_generate_initial_data(spark, glue_context):
         StructField("first_name", StringType(), True),
         StructField("last_name", StringType(), True),
         StructField("email", StringType(), True),
-        StructField("created_at", TimestampType(), True)
+        StructField("created_at", TimestampType(), True),
+        StructField("Op", StringType(), True)
     ])
     
     df = spark.createDataFrame(initial_data, schema)
@@ -29,9 +30,9 @@ def test_generate_initial_data(spark, glue_context):
 def test_generate_cdc_data(spark, glue_context):
     # Generate CDC data
     cdc_data = [
-        (4, "Alice", "Brown", "alice.brown@email.com", datetime(2023, 1, 2), "I"),
-        (2, "Jane", "Wilson", "jane.wilson@email.com", datetime(2023, 1, 2), "U"),
-        (3, None, None, None, None, "D")
+        (4, "Alice", "Brown", "alice.brown@email.com", datetime(2023, 1, 2), "I", "123 Main St"),
+        (2, "Jane", "Wilson", "jane.wilson@email.com", datetime(2023, 1, 2), "U", "456 Oak Ave"),
+        (3, None, None, None, None, "D", None)
     ]
     
     schema = StructType([
@@ -40,7 +41,8 @@ def test_generate_cdc_data(spark, glue_context):
         StructField("last_name", StringType(), True),
         StructField("email", StringType(), True),
         StructField("created_at", TimestampType(), True),
-        StructField("Op", StringType(), True)
+        StructField("Op", StringType(), True),
+        StructField("address", StringType(), True)
     ])
     
     cdc_df = spark.createDataFrame(cdc_data, schema)
