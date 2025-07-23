@@ -80,23 +80,22 @@ cdc_df = spark.read.parquet(source_path)
 table_name = f"s3tablesmarcos.{args['table_name']}"
 existing_df = spark.read.format("iceberg").table(table_name)
 
-# Usage in your code:
-existing_df, cdc_df = handle_schema_evolution_iceberg(
+existing_df, cdc_df, table_columns = handle_schema_evolution_iceberg(
     existing_df,
     cdc_df,
     table_name,
-    column_mapping={"old_address": "address"}  # Optional renames
+    column_mapping={}  # Add any column renames here
 )
-# Separate CDC operations
-inserts = cdc_df.filter(col("Op") == "I").drop("Op")
-updates = cdc_df.filter(col("Op") == "U").drop("Op")
+
+# Separate CDC operations and select only table columns
+inserts = cdc_df.filter(col("Op") == "I").select(*table_columns)
+updates = cdc_df.filter(col("Op") == "U").select(*table_columns)
 deletes = cdc_df.filter(col("Op") == "D")
 
 # Apply inserts
 if inserts.count() > 0:
     inserts.write \
         .format("iceberg") \
-        .option("mergeSchema", "true") \
         .mode("append") \
         .saveAsTable(table_name)
 
@@ -111,9 +110,9 @@ if updates.count() > 0:
         WHEN MATCHED THEN UPDATE SET *
     """)
 
-# Apply deletes
+# Apply deletes (only need key columns for delete)
 if deletes.count() > 0:
-    deletes.createOrReplaceTempView("deletes_temp")
+    deletes.select("id").createOrReplaceTempView("deletes_temp")
 
     spark.sql(f"""
         MERGE INTO {table_name} target
