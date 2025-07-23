@@ -39,13 +39,6 @@ resource "aws_glue_job" "initial_load" {
     "--source_bucket"       = aws_s3_bucket.dms_landing.id
     "--table_namespace"     = "s3tablesmarcos"
     "--table_name"         = "people"
-    "--conf"               = <<EOT
-spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
---conf spark.sql.defaultCatalog=s3tablesbucket
---conf spark.sql.catalog.s3tablesbucket=org.apache.iceberg.spark.SparkCatalog
---conf spark.sql.catalog.s3tablesbucket.catalog-impl=software.amazon.s3tables.iceberg.S3TablesCatalog
---conf spark.sql.catalog.s3tablesbucket.warehouse=arn:aws:s3tables:${local.region}:${local.account_id}:bucket/${aws_s3tables_table_bucket.table_bucket.name}
-EOT
   }
 
   glue_version = "5.0"
@@ -71,13 +64,6 @@ resource "aws_glue_job" "cdc_processing" {
     "--enable-observability-metrics" = "true"
     "--source_bucket"       = aws_s3_bucket.dms_landing.id
     "--table_name"         = "people"
-#     "--conf"               = <<EOT
-# spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
-# --conf spark.sql.defaultCatalog=s3tablesbucket
-# --conf spark.sql.catalog.s3tablesbucket=org.apache.iceberg.spark.SparkCatalog
-# --conf spark.sql.catalog.s3tablesbucket.catalog-impl=software.amazon.s3tables.iceberg.S3TablesCatalog
-# --conf spark.sql.catalog.s3tablesbucket.warehouse=arn:aws:s3tables:${local.region}:${local.account_id}:bucket/${aws_s3tables_table_bucket.table_bucket.name}
-# EOT
   }
 
   glue_version = "5.0"

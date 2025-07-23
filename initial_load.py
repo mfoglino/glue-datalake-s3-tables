@@ -1,6 +1,5 @@
 import sys
 from awsglue.utils import getResolvedOptions
-from pyspark import SparkContext
 from pyspark.sql import SparkSession
 from awsglue.context import GlueContext
 
