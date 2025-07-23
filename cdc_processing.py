@@ -15,8 +15,7 @@ spark = SparkSession.builder.appName("glue-s3-tables") \
 args = getResolvedOptions(sys.argv, ['JOB_NAME', 'source_bucket', 'table_name'])
 
 
-## Auxiliar methods
-
+########## Auxiliar methods
 def handle_schema_evolution(existing_df, cdc_df, column_mapping=None):
     """
     Comprehensive schema evolution handler
@@ -48,12 +47,7 @@ def handle_schema_evolution(existing_df, cdc_df, column_mapping=None):
     cdc_df = cdc_df.select(*[c for c in final_columns if c in cdc_df.columns])
 
     return existing_df, cdc_df
-
-
-##
-
-
-
+######################################################################
 
 # Read CDC parquet files
 cdc_path = "/2023/01/02/13/cdc-001.parquet"
@@ -61,20 +55,50 @@ source_path = f"s3://{args['source_bucket']}/people/{cdc_path}"
 cdc_df = spark.read.parquet(source_path)
 
 
-
 # Read existing table
 table_name = f"s3tablesmarcos.{args['table_name']}"
 existing_df = spark.read.format("iceberg").table(table_name)
 
-# Process CDC operations
-inserts = cdc_df.filter(col("Op") == "I")
-updates = cdc_df.filter(col("Op") == "U") 
+# Usage in your code:
+existing_df, cdc_df = handle_schema_evolution(
+    existing_df,
+    cdc_df,
+    column_mapping={"old_address": "address"}  # Optional renames
+)
+
+# Separate CDC operations
+inserts = cdc_df.filter(col("Op") == "I").drop("Op")
+updates = cdc_df.filter(col("Op") == "U").drop("Op")
 deletes = cdc_df.filter(col("Op") == "D")
 
-# Apply changes (simplified merge logic)
+# Apply inserts
 if inserts.count() > 0:
-    inserts.write.format("iceberg").mode("append").saveAsTable(table_name)
+    inserts.write \
+        .format("iceberg") \
+        .option("mergeSchema", "true") \
+        .mode("append") \
+        .saveAsTable(table_name)
 
+# Apply updates using merge
 if updates.count() > 0:
-    updates.write.format("iceberg").mode("append").saveAsTable(table_name)
+    updates.createOrReplaceTempView("updates_temp")
 
+    spark.sql(f"""
+        MERGE INTO {table_name} target
+        USING updates_temp source
+        ON target.id = source.id
+        WHEN MATCHED THEN UPDATE SET *
+    """)
+
+# Apply deletes
+if deletes.count() > 0:
+    deletes.createOrReplaceTempView("deletes_temp")
+
+    spark.sql(f"""
+        MERGE INTO {table_name} target
+        USING deletes_temp source
+        ON target.id = source.id
+        WHEN MATCHED THEN DELETE
+    """)
+
+print(f"CDC processing completed for table {table_name}")
