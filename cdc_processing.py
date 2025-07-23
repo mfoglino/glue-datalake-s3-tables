@@ -31,10 +31,10 @@ def handle_schema_evolution_iceberg(existing_df, cdc_df, table_name, column_mapp
     existing_schema = existing_df.schema
     cdc_schema = cdc_df.schema
 
-    # Find new columns in CDC data (excluding Op column)
+    # Find new columns in CDC data (excluding op column)
     new_columns = []
     for field in cdc_schema.fields:
-        if field.name not in existing_schema.fieldNames() and field.name != "Op":
+        if field.name not in existing_schema.fieldNames() and field.name != "op":
             new_columns.append(field)
 
     # Add new columns to Iceberg table schema first
@@ -51,7 +51,7 @@ def handle_schema_evolution_iceberg(existing_df, cdc_df, table_name, column_mapp
     # Re-read the table to get updated schema
     existing_df = spark.read.format("iceberg").table(table_name)
 
-    # Get table columns (excluding Op)
+    # Get table columns (excluding op)
     table_columns = existing_df.columns
 
     # Add missing columns to CDC data with null values
@@ -85,9 +85,9 @@ existing_df, cdc_df, table_columns = handle_schema_evolution_iceberg(
 )
 
 # Separate CDC operations and select only table columns
-inserts = cdc_df.filter(col("Op") == "I").select(*table_columns)
-updates = cdc_df.filter(col("Op") == "U").select(*table_columns)
-deletes = cdc_df.filter(col("Op") == "D")
+inserts = cdc_df.filter(col("op") == "I").select(*table_columns)
+updates = cdc_df.filter(col("op") == "U").select(*table_columns)
+deletes = cdc_df.filter(col("op") == "D")
 
 # Apply inserts
 if inserts.count() > 0:

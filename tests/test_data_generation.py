@@ -17,7 +17,7 @@ def test_generate_initial_data(spark, glue_context):
         StructField("last_name", StringType(), True),
         StructField("email", StringType(), True),
         StructField("created_at", TimestampType(), True),
-        StructField("Op", StringType(), True)
+        StructField("op", StringType(), True)
     ])
     
     df = spark.createDataFrame(initial_data, schema)
@@ -41,7 +41,7 @@ def test_generate_cdc_data(spark, glue_context):
         StructField("last_name", StringType(), True),
         StructField("email", StringType(), True),
         StructField("created_at", TimestampType(), True),
-        StructField("Op", StringType(), True),
+        StructField("op", StringType(), True),
         StructField("address", StringType(), True)
     ])
     
