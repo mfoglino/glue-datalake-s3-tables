@@ -23,6 +23,7 @@ args = getResolvedOptions(sys.argv, ['JOB_NAME', 'source_bucket', 'table_name'])
 glueContext = GlueContext(spark.sparkContext)
 logger = glueContext.get_logger()
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Auxiliar methods
 # ----------------------------------------------------------------------------------------------------------------------

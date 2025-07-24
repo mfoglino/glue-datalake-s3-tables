@@ -43,6 +43,26 @@ resource "aws_iam_role_policy_attachment" "s3_full_access" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
+resource "aws_iam_role_policy" "dynamodb_checkpoints_policy" {
+  name = "dynamodb-checkpoints-access"
+  role = aws_iam_role.glue_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DescribeTable"
+        ]
+        Resource = "arn:aws:dynamodb:us-east-1:*:table/etl_table_checkpoints"
+      }
+    ]
+  })
+}
+
 # resource "aws_iam_role_policy" "s3tables_federation_policy" {
 #   name = "s3tables-federation-access"
 #   role = aws_iam_role.glue_role.id
