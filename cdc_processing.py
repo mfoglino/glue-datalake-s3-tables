@@ -7,6 +7,7 @@ from awsglue.utils import getResolvedOptions
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, lit
 from pyspark.sql.types import StructType
+from awsglue.context import GlueContext
 
 spark = SparkSession.builder.appName("glue-s3-tables") \
     .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
@@ -18,7 +19,9 @@ spark = SparkSession.builder.appName("glue-s3-tables") \
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME', 'source_bucket', 'table_name'])
 
-
+# Build GlueContext from the SparkSession
+glueContext = GlueContext(spark.sparkContext)
+logger = glueContext.get_logger()
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Auxiliar methods
@@ -245,22 +248,23 @@ if __name__ == "__main__":
 
     # Get last checkpoint from DynamoDB
     last_checkpoint = get_checkpoint_from_dynamodb(args['table_name'])
-    print(f"Last checkpoint from DynamoDB: {last_checkpoint}")
+    logger.info(f"Last checkpoint from DynamoDB: {last_checkpoint}")
 
     # Get new CDC files to process
     new_cdc_files = get_new_cdc_files(args['source_bucket'], last_checkpoint)
+    logger.info(f"New CDC files to process: {new_cdc_files}")
 
     if not new_cdc_files:
-        print("No new CDC files to process")
+        logger.info("No new CDC files to process")
         exit(0)
 
-    print(f"Found {len(new_cdc_files)} new CDC files to process")
+    logger.info(f"Found {len(new_cdc_files)} new CDC files to process")
 
     # Read and union all new CDC files with schema normalization
     cdc_df = read_and_union_cdc_files(args['source_bucket'], new_cdc_files)
 
     if cdc_df is None:
-        print("No valid CDC data to process")
+        logger.info("No valid CDC data to process")
         exit(0)
 
     # Continue with existing processing...
@@ -305,6 +309,7 @@ if __name__ == "__main__":
 
     # Update checkpoint in DynamoDB
     if new_cdc_files:
+        logger.info(f"Updating checkpoint in DynamoDB: {new_cdc_files[-1]}")
         update_checkpoint_in_dynamodb(args['table_name'], new_cdc_files[-1])
 
-    print(f"CDC processing completed for table {table_name}")
+    logger.info(f"CDC processing completed for table {table_name}")
