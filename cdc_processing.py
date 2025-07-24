@@ -243,7 +243,7 @@ def handle_schema_evolution_iceberg(existing_df, cdc_df, table_name, column_mapp
 
 
 
-if __name__ == "__main__":
+def main():
     # Read CDC parquet files
     table_name = f"s3tablesmarcos.{args['table_name']}"
 
@@ -257,7 +257,7 @@ if __name__ == "__main__":
 
     if not new_cdc_files:
         logger.info("No new CDC files to process")
-        exit(1)
+        return
 
     logger.info(f"Found {len(new_cdc_files)} new CDC files to process")
 
@@ -266,7 +266,7 @@ if __name__ == "__main__":
 
     if cdc_df is None:
         logger.info("No valid CDC data to process")
-        exit(1)
+        return
 
     # Continue with existing processing...
     existing_df = spark.read.format("iceberg").table(table_name)
@@ -314,3 +314,7 @@ if __name__ == "__main__":
         update_checkpoint_in_dynamodb(args['table_name'], new_cdc_files[-1])
 
     logger.info(f"CDC processing completed for table {table_name}")
+
+
+if __name__ == "__main__":
+    main()
