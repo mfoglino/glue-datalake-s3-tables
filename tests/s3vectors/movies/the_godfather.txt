@@ -1,0 +1,10 @@
+Title: The Godfather
+Year: 1972
+Director: Francis Ford Coppola
+Genre: Crime, Drama
+Plot: The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.
+Cast: Marlon Brando, Al Pacino, James Caan
+Rating: R
+IMDB Score: 9.2
+Runtime: 175 minutes
+Awards: Academy Award for Best Picture, Best Actor, Best Adapted Screenplay

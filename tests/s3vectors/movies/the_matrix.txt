@@ -1,0 +1,10 @@
+Title: The Matrix
+Year: 1999
+Director: The Wachowskis
+Genre: Action, Sci-Fi
+Plot: A computer programmer is led to fight an underground war against powerful computers who have constructed his entire reality with a system called the Matrix.
+Cast: Keanu Reeves, Laurence Fishburne, Carrie-Anne Moss
+Rating: R
+IMDB Score: 8.7
+Runtime: 136 minutes
+Awards: Academy Award for Best Film Editing, Best Sound, Best Sound Effects Editing, Best Visual Effects

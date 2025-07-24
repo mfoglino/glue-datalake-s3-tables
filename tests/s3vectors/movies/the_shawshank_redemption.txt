@@ -1,0 +1,10 @@
+Title: The Shawshank Redemption
+Year: 1994
+Director: Frank Darabont
+Genre: Drama
+Plot: Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.
+Cast: Tim Robbins, Morgan Freeman, Bob Gunton
+Rating: R
+IMDB Score: 9.3
+Runtime: 142 minutes
+Awards: Academy Award nominations for Best Picture, Best Actor, Best Adapted Screenplay
