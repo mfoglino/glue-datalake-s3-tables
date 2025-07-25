@@ -6,12 +6,14 @@ def query_movies_kb():
     response = bedrock_agent.retrieve(
         knowledgeBaseId='IE3VBIJWP7',
         retrievalQuery={
-            'text': 'What movies were directed by Quentin Tarantino?'
+            #'text': 'What movies were directed by Quentin Tarantino?'
+            'text': 'What movies were directed by Coppola?'
+            #'text': 'Sci-fi movies'
         }
     )
 
     for result in response['retrievalResults']:
-        #print(f"Result: {result}")
+        print(f"")
         print(f"Metadata:{result['metadata']}")
         print(f"Content: {result['content']['text']}")
         print(f"Score: {result['score']}")
